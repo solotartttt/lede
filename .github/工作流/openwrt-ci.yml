@@ -136,7 +136,6 @@ jobs:
           # CONFIG_PACKAGE_luci-app-baidupcs-web=y
           # CONFIG_PACKAGE_luci-app-docker=y
           # CONFIG_PACKAGE_luci-app-frpc=y
-          # CONFIG_PACKAGE_luci-app-hd-idle=y
           # CONFIG_PACKAGE_luci-app-kodexplorer=y
           # CONFIG_PACKAGE_luci-app-minidlna=y
           # CONFIG_PACKAGE_luci-app-openvpn=y
@@ -188,23 +187,16 @@ jobs:
       - name: Make download
         run: |
           make download -j8
-          find dl -size -1024c -exec ls -l {} \;
-          find dl -size -1024c -exec rm -f {} \;
+          find ./dl/ -size -1024c -exec rm -f {} \;
 
       - name: Compile firmware
-        run: |
-          echo -e "$(nproc) thread build."
-          make -j$(nproc) V=s
+        run: DEBIAN_FRONTEND=noninteractive make -j$(nproc) V=s
 
-      - name: Assemble artifact
-        run: |
-          rm -rf ./artifact/
-          mkdir -p ./artifact/
-          find ./bin/targets/ -name "*combined*img*" | xargs -i mv -f {} ./artifact/
-          find ./bin/targets/ -name "*sysupgrade*bin*" | xargs -i mv -f {} ./artifact/
+      - name: Prepare artifact
+        run: find ./bin/targets/ -type d -name "packages" | xargs rm -rf {}
 
       - name: Upload artifact
         uses: actions/upload-artifact@master
         with:
           name: OpenWrt firmware
-          path: ./artifact/
+          path: ./bin/targets/
